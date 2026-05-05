@@ -47,9 +47,9 @@ The dataset contained **260 labelled cases**. Every case contained the expected 
 
 The foreground occupied only about **5.33%** of voxels per case. This confirmed that the dataset has a strong foreground-background imbalance and justified foreground-biased patch sampling during training.
 
-![Image shape distribution](reports/report/image_shape_distribution.png)
+![Image shape distribution](reports/figures/report/image_shape_distribution.png)
 
-![Foreground fraction per case](reports/report/foreground_fraction_histogram.png)
+![Foreground fraction per case](reports/figures/report/foreground_fraction_histogram.png)
 
 ### 2.3 Visual inspection
 
@@ -210,9 +210,9 @@ Mean entropy on error voxels was approximately **1.54×** higher than mean foreg
 
 This supports the project hypothesis: uncertainty estimates can help identify likely segmentation failure regions.
 
-![Uncertainty example: hippocampus_087](reports/report/hippocampus_087_uncertainty.png)
+![Uncertainty example: hippocampus_087](reports/figures/report/hippocampus_087_uncertainty.png)
 
-![Uncertainty example: hippocampus_038](reports/report/hippocampus_038_uncertainty.png)
+![Uncertainty example: hippocampus_038](reports/figures/report/hippocampus_038_uncertainty.png)
 
 The qualitative examples show that uncertainty is concentrated around object boundaries, class transition regions, and areas where the prediction differs from the ground truth. This pattern is desirable because boundary regions are often the most ambiguous parts of a medical segmentation task.
 
@@ -225,9 +225,9 @@ Calibration analysis produced very different results depending on whether all vo
 | ECE, all voxels | 0.0104 |
 | ECE, foreground voxels | 0.3525 |
 
-![Reliability diagram: all voxels](reports/report/test_reliability_all_voxels.png)
+![Reliability diagram: all voxels](reports/figures/report/test_reliability_all_voxels.png)
 
-![Reliability diagram: foreground voxels](reports/report/test_reliability_foreground.png)
+![Reliability diagram: foreground voxels](reports/figures/report/test_reliability_foreground.png)
 
 The all-voxel ECE was low, but this result is misleading because most voxels are easy background voxels. The foreground-only ECE was much higher and is more relevant for segmentation quality.
 
