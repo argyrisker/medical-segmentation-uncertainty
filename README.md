@@ -191,3 +191,11 @@ Specificity is included, but do not headline it. It is often inflated by backgro
 - Uncertainty maps are not clinical safety guarantees
 
 The purpose of this repo is to demonstrate a clean medical imaging ML workflow, not to claim clinical deployment readiness.
+
+## License
+
+The source code in this repository is licensed under the MIT License.
+
+This project uses the Medical Segmentation Decathlon Task04 Hippocampus dataset. Dataset-derived figures, including MRI overlays and segmentation visualizations, are included only for research and portfolio documentation purposes and should be attributed to the original dataset source according to its license terms.
+
+Model checkpoints, raw dataset files, prediction arrays, and generated experiment outputs are not included in this repository.
