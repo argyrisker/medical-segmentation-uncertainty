@@ -55,7 +55,7 @@ The foreground occupied only about **5.33%** of voxels per case. This confirmed 
 
 Visual inspection of MRI images and segmentation labels was used to check whether labels were spatially plausible and aligned with the image content.
 
-![Three-plane MRI/label overlay](reports/report/hippocampus_279_three_plane_overlay.png)
+![Three-plane MRI/label overlay](reports/figures/report/hippocampus_279_three_plane_overlay.png)
 
 The overlays were treated as a necessary sanity check before training. Without this step, a model could be trained on incorrectly oriented or misaligned labels.
 
