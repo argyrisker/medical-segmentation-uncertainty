@@ -55,7 +55,7 @@ The foreground occupied only about **5.33%** of voxels per case. This confirmed 
 
 Visual inspection of MRI images and segmentation labels was used to check whether labels were spatially plausible and aligned with the image content.
 
-![Three-plane MRI/label overlay](reports/figures/report/hippocampus_279_three_plane_overlay.png)
+![Three-plane MRI/label overlay](figures/report/hippocampus_279_three_plane_overlay.png)
 
 The overlays were treated as a necessary sanity check before training. Without this step, a model could be trained on incorrectly oriented or misaligned labels.
 
@@ -210,9 +210,9 @@ Mean entropy on error voxels was approximately **1.54×** higher than mean foreg
 
 This supports the project hypothesis: uncertainty estimates can help identify likely segmentation failure regions.
 
-![Uncertainty example: hippocampus_087](reports/figures/report/hippocampus_087_uncertainty.png)
+![Uncertainty example: hippocampus_087](figures/report/hippocampus_087_uncertainty.png)
 
-![Uncertainty example: hippocampus_038](reports/figures/report/hippocampus_038_uncertainty.png)
+![Uncertainty example: hippocampus_038](figures/report/hippocampus_038_uncertainty.png)
 
 The qualitative examples show that uncertainty is concentrated around object boundaries, class transition regions, and areas where the prediction differs from the ground truth. This pattern is desirable because boundary regions are often the most ambiguous parts of a medical segmentation task.
 
@@ -225,9 +225,9 @@ Calibration analysis produced very different results depending on whether all vo
 | ECE, all voxels | 0.0104 |
 | ECE, foreground voxels | 0.3525 |
 
-![Reliability diagram: all voxels](reports/figures/report/test_reliability_all_voxels.png)
+![Reliability diagram: all voxels](figures/report/test_reliability_all_voxels.png)
 
-![Reliability diagram: foreground voxels](reports/figures/report/test_reliability_foreground.png)
+![Reliability diagram: foreground voxels](figures/report/test_reliability_foreground.png)
 
 The all-voxel ECE was low, but this result is misleading because most voxels are easy background voxels. The foreground-only ECE was much higher and is more relevant for segmentation quality.
 
