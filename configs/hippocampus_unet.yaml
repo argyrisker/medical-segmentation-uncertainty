@@ -1,0 +1,59 @@
+project:
+  run_name: hippocampus_unet_baseline
+  seed: 42
+
+dataset:
+  root_dir: data
+  task: Task04_Hippocampus
+
+split:
+  # Internal labelled split from MSD training data
+  # Official MSD test images do not have labels
+  val_frac: 0.15
+  test_frac: 0.15
+
+preprocessing:
+  pixdim: [1.0, 1.0, 1.0]
+  patch_size: [32, 32, 32]
+  crop_margin: 5
+  num_samples: 4
+  pos: 2.0
+  neg: 1.0
+
+model:
+  in_channels: 1
+  num_classes: 3
+  channels: [16, 32, 64, 128, 256]
+  strides: [2, 2, 2, 2]
+  num_res_units: 2
+  dropout: 0.1
+
+training:
+  epochs: 100
+  val_interval: 2
+  batch_size: 2
+  lr: 0.0001
+  weight_decay: 0.00001
+  cache_rate: 0.0
+  num_workers: 2
+
+inference:
+  roi_size: [64, 64, 64]
+  sw_batch_size: 2
+  overlap: 0.5
+
+uncertainty:
+  mc_samples: 20
+
+calibration:
+  n_bins: 15
+
+experiments:
+  low_data_fractions: [1.0, 0.5, 0.25, 0.1]
+
+paths:
+  checkpoints_dir: outputs/checkpoints
+  metrics_dir: outputs/metrics
+  predictions_dir: outputs/predictions
+  uncertainty_dir: outputs/uncertainty_maps
+  figures_dir: reports/figures
