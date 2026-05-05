@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv/
+venv/
+
+# Data
+data/
+*.nii
+*.nii.gz
+
+# Model checkpoints and output arrays
+outputs/
+*.pt
+*.pth
+*.ckpt
+*.npy
+*.npz
+
+# Logs
+runs/
+wandb/
+*.log
+
+# Ignore generated figures by default
+reports/figures/*
+
+# Keep curated report figures used in the report
+!reports/figures/report/
+!reports/figures/report/*.png
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
