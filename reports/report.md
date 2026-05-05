@@ -47,9 +47,9 @@ The dataset contained **260 labelled cases**. Every case contained the expected 
 
 The foreground occupied only about **5.33%** of voxels per case. This confirmed that the dataset has a strong foreground-background imbalance and justified foreground-biased patch sampling during training.
 
-![Image shape distribution](reports/figures/report/image_shape_distribution.png)
+![Image shape distribution](main/reports/figures/report/image_shape_distribution.png)
 
-![Foreground fraction per case](reports/figures/report/foreground_fraction_histogram.png)
+![Foreground fraction per case](main/reports/figures/report/foreground_fraction_histogram.png)
 
 ### 2.3 Visual inspection
 
