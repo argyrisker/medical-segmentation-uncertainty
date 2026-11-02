@@ -1,0 +1,6 @@
+# Stage 3 ablation. Batch norm instead of instance norm
+base: baseline.yaml
+project:
+  run_name: s3_batchnorm
+model:
+  norm: batch

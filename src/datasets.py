@@ -32,13 +32,23 @@ class MSDConfig:
 
 
 def ensure_msd_downloaded(cfg: MSDConfig, download: bool = True) -> None:
+    """
+    Make sure the dataset is on disk. Does nothing (and needs no network)
+    when dataset.json already exists.
+    """
+    if cfg.dataset_json_path.exists():
+        return
+    if not download:
+        raise FileNotFoundError(
+            f"Could not find {cfg.dataset_json_path}. Run once with --download."
+        )
     cfg.root_path.mkdir(parents=True, exist_ok=True)
     _ = DecathlonDataset(
         root_dir=str(cfg.root_path),
         task=cfg.task,
         section="training",
         transform=None,
-        download=download,
+        download=True,
         seed=cfg.seed,
         val_frac=0.2,
         cache_num=0,
@@ -107,17 +117,74 @@ def select_data_fraction(
     train_cases: list[dict[str, Any]],
     fraction: float,
     seed: int,
+    max_cases: int | None = None,
 ) -> list[dict[str, Any]]:
+    """
+    Pick a fixed random subset of the training cases.
+
+    `max_cases` (an absolute number) takes precedence over `fraction`.
+    The same seed always gives the same subset.
+    """
     if not 0.0 < fraction <= 1.0:
         raise ValueError("fraction must be in (0, 1].")
-    if fraction == 1.0:
+    if max_cases is None and fraction == 1.0:
         return train_cases
 
     rng = random.Random(seed)
     selected = train_cases.copy()
     rng.shuffle(selected)
-    n = max(1, int(round(len(selected) * fraction)))
+    if max_cases is not None:
+        n = max(1, min(int(max_cases), len(selected)))
+    else:
+        n = max(1, int(round(len(selected) * fraction)))
     return selected[:n]
+
+
+def repeat_to_length(cases: list[dict[str, Any]], length: int | None) -> list[dict[str, Any]]:
+    """
+    Repeat a small training list so one epoch has `length` samples.
+    Keeps the number of gradient steps per epoch equal across data sizes.
+    """
+    if not length or len(cases) >= length:
+        return cases
+    reps = -(-int(length) // len(cases))  # ceiling division
+    return (cases * reps)[: int(length)]
+
+
+def get_splits(
+    cfg: dict[str, Any],
+    download: bool = False,
+    data_fraction: float = 1.0,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """
+    Return (train, val, test) case lists for a config.
+
+    The split uses split.seed (falls back to project.seed), never the
+    training seed, so all runs share the same validation and test cases.
+    """
+    from src.config_utils import split_seed
+
+    seed = split_seed(cfg)
+    msd_cfg = MSDConfig(
+        root_dir=cfg["dataset"]["root_dir"],
+        task=cfg["dataset"]["task"],
+        seed=seed,
+    )
+    ensure_msd_downloaded(msd_cfg, download=download)
+    cases = get_labelled_cases(msd_cfg)
+    train_cases, val_cases, test_cases = split_cases(
+        cases=cases,
+        seed=seed,
+        val_frac=cfg["split"]["val_frac"],
+        test_frac=cfg["split"]["test_frac"],
+    )
+    train_cases = select_data_fraction(
+        train_cases,
+        fraction=data_fraction,
+        seed=seed,
+        max_cases=cfg["split"].get("train_cases"),
+    )
+    return train_cases, val_cases, test_cases
 
 
 def make_monai_dataset(

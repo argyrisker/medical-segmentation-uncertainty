@@ -1,0 +1,12 @@
+# Stage 1a. Fixes the train/inference mismatch by predicting with the same
+# 32^3 window the model was trained on.
+base: v2_common.yaml
+project:
+  run_name: s1a_patch32
+preprocessing:
+  patch_size: [32, 32, 32]
+  num_samples: 4
+training:
+  batch_size: 2               # 2 volumes x 4 patches = 8 patches per step
+inference:
+  roi_size: [32, 32, 32]

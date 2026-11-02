@@ -1,0 +1,6 @@
+# Stage 1b. Learning-rate sweep; lr 3e-4 is the stage 1a run itself.
+base: baseline.yaml
+project:
+  run_name: s1b_lr1e-4
+training:
+  lr: 0.0001

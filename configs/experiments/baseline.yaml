@@ -1,0 +1,10 @@
+# The v2 baseline. Stages 2-5 inherit from this file.
+#
+# After stage 1a: point `base` at the patch config with the higher best
+#   validation Dice (s1a_patchfull.yaml or s1a_patch32.yaml).
+# After stage 1b: set training.lr to the best learning rate.
+base: s1a_patchfull.yaml
+project:
+  run_name: baseline
+training:
+  lr: 0.0003

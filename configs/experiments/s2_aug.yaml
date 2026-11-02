@@ -1,0 +1,6 @@
+# Stage 2. As s2_noreg, plus the baseline augmentation.
+base: s2_noreg.yaml
+project:
+  run_name: s2_aug
+augmentation:
+  level: full

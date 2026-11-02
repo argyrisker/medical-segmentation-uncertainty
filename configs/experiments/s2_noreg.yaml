@@ -1,0 +1,13 @@
+# Stage 2. Built to overfit: 10 training cases, no augmentation, no dropout,
+# no weight decay. Expect train Dice near 1 and validation loss rising.
+base: baseline.yaml
+project:
+  run_name: s2_noreg
+split:
+  train_cases: 10
+augmentation:
+  level: none
+model:
+  dropout: 0.0
+training:
+  weight_decay: 0.0

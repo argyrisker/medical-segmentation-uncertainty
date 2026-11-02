@@ -1,0 +1,9 @@
+# Stage 1a. The original pipeline, retrained with full logging.
+# Only logging and caching differ from v1; the model and training are identical.
+base: ../hippocampus_unet.yaml
+project:
+  run_name: v1_legacy
+training:
+  val_interval: 1
+  cache_rate: 1.0
+  num_workers: 4

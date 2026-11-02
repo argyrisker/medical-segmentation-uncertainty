@@ -1,0 +1,18 @@
+# Shared settings for every v2 run. Not trained on its own.
+base: ../hippocampus_unet.yaml
+project:
+  run_name: v2_common
+preprocessing:
+  crop_foreground: none       # volumes are pre-cropped; v1 crop only added a zero border
+augmentation:
+  rot90: false                # cannot rotate a 48 x 64 axial patch; off for every v2 run so all compare fairly
+model:
+  arch: custom                # own UNet3D, so ablations can switch parts off
+training:
+  epochs: 200
+  val_interval: 1
+  lr: 0.0003
+  scheduler: cosine           # decays to lr * min_lr_ratio by the last epoch
+  samples_per_epoch: 182      # = full training set; small subsets are repeated to this
+  cache_rate: 1.0
+  num_workers: 4

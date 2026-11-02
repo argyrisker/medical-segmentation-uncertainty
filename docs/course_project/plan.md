@@ -4,7 +4,7 @@ Course: Introduction to Deep Learning 2026, final project option 3, "bring your 
 
 | Date | What |
 |---|---|
-| Now | Email the one-page proposal in `proposal_draft.md` and wait for approval before starting |
+| Done | Proposal sent and approved |
 | Tue Nov 10 | Send slides to mahmoud.Rahat@hh.se. This also books the presentation slot, first come first served |
 | Fri Nov 13, 13:00–16:00 | 15-minute slot: 12 min talk, 3 min questions. Attend the whole session |
 
@@ -38,11 +38,22 @@ The current test Dice is 0.716. nnU-Net reaches about 0.89–0.90 on this task. 
 
 1. **Undertraining.** Learning rate is a constant 1e-4 with no schedule, and validation Dice was still rising at epoch 96. See `configs/hippocampus_unet.yaml`.
 2. **Train/inference window mismatch.** Training uses 32³ patches, but inference uses 64³ windows. The volumes are only about 35×50×36, so MONAI's sliding-window inference zero-pads every window to 64³. Roughly three quarters of each inference window is padding the network never saw in training, and instance normalisation statistics shift accordingly. Fix: make `roi_size` equal `patch_size`, and compare 32³ against a patch that covers the whole volume, such as 48×64×48. nnU-Net plans a patch of about 40×56×40 for this task.
-3. **Foreground crop after z-scoring.** In `src/transforms.py`, `CropForegroundd` runs after `NormalizeIntensityd`. Its default keeps voxels greater than zero, and after z-scoring every below-mean tissue voxel is negative. The crop box is then computed from bright voxels only and can clip labelled voxels. Fix: crop before normalising, or drop the crop because MSD volumes are already cropped. Check the effect in the notebook by counting label voxels before and after.
+3. **Foreground crop after z-scoring.** Checked on all 260 scans: this does no harm to the labels. Bright voxels touch every image edge, so the crop box is the whole scan, and since MONAI 1.5 the 5-voxel margin then *pads* instead of cropping. Every v1 volume gained a 5-voxel zero border per side and no labelled voxel was lost. v2 drops the crop, because the scans are already cropped to at most 43×59×47.
 4. **Anterior–posterior flips.** Labels 1 and 2 are anterior and posterior hippocampus. After RAS reorientation, axis 1 is the anterior–posterior axis, and the pipeline flips it and rotates in the axial plane. This produces anatomically impossible training images. nnU-Net mirrors all axes and still does well, so treat this as an ablation, not a bug.
 5. **No validation loss and no train Dice.** Without these you cannot draw the required loss plot or diagnose overfitting.
 
 ## 4. Experiment plan
+
+**Status: stage 0 is done.** Every stage below is one script in `scripts/`, and every run is one YAML file in `configs/experiments/`. Run `scripts/smoke_test.sh` first on the GPU machine, and read the epoch time it prints to budget the rest.
+
+Early sanity check, run on CPU while testing the code. These are validation numbers from a short run, not results for the slides:
+
+| Run | Epochs | Best validation Dice |
+|---|---|---|
+| v1 (original report) | 100 | 0.700 |
+| v2 baseline | 8 | 0.787 |
+
+The v1 rerun also reproduced the original first-epoch training loss exactly (2.0226), so the `v1_legacy` run is a faithful reference.
 
 Ground rules:
 
@@ -52,78 +63,84 @@ Ground rules:
 - Set `cache_rate: 1.0`. The whole dataset fits in memory easily.
 - Time the first full run, then budget the rest. Queue runs overnight.
 
-### Stage 0: code changes
+### Stage 0: code changes (done)
 
 | File | Change |
 |---|---|
-| `src/train.py` | Validation loss on full val volumes, train Dice on a fixed subset, LR logging, cosine schedule option, `--seed` override, write history every epoch |
-| new `src/plot_curves.py` | Learning curves from `training_history.csv`, several runs on one figure |
-| `src/models.py` | Custom 3D U-Net with a `use_skips` switch, because MONAI's `UNet` always has skips. Expose depth, residual units, norm type |
-| `src/transforms.py` | Crop before normalising. Augmentation level: none, no A–P flip, full |
-| `src/metrics.py` | Precision and a 3×3 voxel confusion matrix |
-| `src/infer_uncertainty.py` | Deep-ensemble mode. Voxel-level AUROC of uncertainty for detecting errors |
-| `src/calibration.py` | Temperature scaling fitted on the validation set |
-| `configs/experiments/` | One small YAML per run, so every slide number maps to a config |
+| `src/train.py` | Validation loss and train Dice/loss on whole volumes every epoch, LR logging, cosine schedule, `--seed` and `--set` overrides, history written every epoch, `summary.json` |
+| `src/models.py` | Own `UNet3D` with switches for skip connections, residual blocks, depth, dropout and normalisation |
+| `src/transforms.py` | Crop mode and augmentation level (`full`, `anatomical`, `none`) as config options |
+| `src/losses.py` | Dice+CE, Dice only or CE only |
+| `src/metrics.py`, `src/evaluate.py` | Precision, voxel confusion matrix, train/val/test evaluation |
+| `src/infer_uncertainty.py` | Deterministic, MC dropout and ensemble modes, error-detection AUROC and ROC curve |
+| `src/calibration.py` | Temperature scaling fitted on validation |
+| `src/plot_curves.py`, `src/compare_runs.py`, `src/compare_uncertainty.py` | Learning curves, comparison tables with paired Wilcoxon tests, ROC overlays |
+| `src/config_utils.py`, `src/datasets.py` | Config inheritance, split seed kept separate from the training seed |
 
 ### Stage 1: fixed baseline and tuning
 
-| Run | Change | Purpose |
+| Script | Runs | Purpose |
 |---|---|---|
-| v1 | Current config, with new logging | Reference learning curves |
-| v2-patch32 | Fixes 1–3, patch = roi = 32³ | Does fixing the mismatch help? |
-| v2-patchfull | Fixes 1–3, patch = roi = 48×64×48 | Whole-volume context |
-| lr sweep | lr in {1e-4, 3e-4, 1e-3}, cosine decay, 200 epochs | Pick the learning rate |
-| batch | batch size 2 vs 4 | Only if time allows |
+| `stage1a_patch.sh` | `v1_legacy`, `s1a_patch32`, `s1a_patchfull` | Reference curves for v1, then fixes 1–2 with a 32³ patch or a whole-scan 48×64×48 patch |
+| `stage1b_lr.sh` | `s1b_lr1e-4`, `s1b_lr1e-3` | Learning-rate sweep. The stage 1a winner is the lr 3e-4 point |
+| `stage1c_baseline.sh` | `baseline_seed42/43/44` | Final baseline with three training seeds on the same split |
 
-The winner on validation Dice becomes the baseline for every later stage.
+Between scripts you make two one-line edits to `configs/experiments/baseline.yaml`, which the scripts print. Every later stage inherits from that file. The seed spread from stage 1c tells you how large an ablation difference must be to mean anything.
 
 ### Stage 2: overfitting study
 
-1. Train on 10 cases with no augmentation, dropout 0 and weight decay 0, for 300 epochs. Expect train loss near zero and validation loss rising.
-2. Add back augmentation, then dropout, then weight decay, one per run. Plot the train–validation gap for each.
-3. Optional: reuse the existing low-data script for 10, 25, 50 and 100% of training data with full regularisation.
+`stage2_overfit.sh` trains, all on 10 cases with the same number of gradient steps per epoch as the full data:
+
+1. `s2_noreg`: no augmentation, dropout 0, weight decay 0. Expect train Dice near 1 and validation loss rising.
+2. `s2_aug`: plus augmentation.
+3. `s2_aug_dropout`: plus dropout 0.1. This is the baseline's regularisation; its weight decay of 1e-5 is too small to matter.
+4. `s2_aug_dropout_wd`: plus a real weight decay of 1e-2.
+
+It also trains the baseline on 25% and 50% of the data. With the 10-case and full runs, that gives a data-size curve.
 
 If the full-data model will not overfit, say why: random patches plus augmentation give a near-endless stream of distinct inputs to a network with millions of parameters. Stage 2 then shows which component is responsible.
 
 ### Stage 3: ablation
 
-All runs change one thing against the Stage 1 baseline. Priority 1 runs first.
+`stage3_ablation.sh` runs these in priority order; `PRIORITY=1` runs only the first five. Each changes one thing against `baseline_seed42`.
 
 | Priority | Ablation | Question |
 |---|---|---|
 | 1 | No skip connections | Are skips really needed? This links to the course hint |
 | 1 | No augmentation | How much does augmentation buy? |
-| 1 | No A–P flip or rotation | Do anatomically impossible flips hurt? |
+| 1 | Left-right flip only | Do anatomically impossible flips (front-back, up-down) hurt? |
 | 1 | Loss: CE only, Dice only, Dice+CE | Which loss handles 5% foreground best? |
 | 2 | Dropout 0 and 0.3 | Effect on accuracy and on MC-dropout uncertainty |
 | 2 | Residual units 2 → 0 | Are residual blocks needed? |
-| 2 | Depth 5 → 3 levels | Is a deep encoder needed for small volumes? |
+| 2 | Depth 5 → 3 levels | Is a deep encoder needed for small volumes? Note this also cuts parameters from 5.7M to 0.34M |
 | 3 | Batch norm instead of instance norm | Only if time allows |
 
 ### Stage 4: uncertainty and calibration
 
-- Compare MC dropout with a deep ensemble built from the 3 baseline seeds, which costs nothing extra.
-- Measure voxel-level AUROC of entropy for detecting errors. This gives the ROC curve the course asks for.
-- Keep the case-level check: correlation of mean uncertainty with Dice.
-- Fit temperature scaling on validation and report foreground ECE before and after.
+`stage4_uncertainty.sh` works on the validation set:
+
+- Compares a single softmax pass, MC dropout, and a deep ensemble of the three baseline seeds, which costs no extra training.
+- Measures how well each method's entropy flags error voxels, as an ROC curve and AUROC. This gives the ROC the course asks for.
+- Keeps the case-level check: correlation of mean uncertainty with Dice.
+- Fits temperature scaling on validation and reports foreground calibration error before and after.
 
 ### Stage 5: final test evaluation
 
-Run the chosen models on the test set once. Report Dice, precision, recall, HD95, the confusion matrix, and qualitative examples including the worst case.
+`stage5_test.sh` is the only script that touches the test set. It evaluates every finished model, reports train, validation and test performance for the baseline, and reruns stage 4 on test. Report Dice, precision, recall, HD95, the confusion matrix, and qualitative examples including the worst case.
 
 ## 5. Schedule
 
 | Days | Work |
 |---|---|
-| Thu Oct 29 – Fri Oct 30 | Send proposal. Stage 0 code. Smoke-test with `scripts/run_fast_dev.sh` |
-| Sat Oct 31 – Mon Nov 2 | Stage 1 |
-| Tue Nov 3 – Thu Nov 5 | Stages 2 and 3 |
-| Fri Nov 6 – Sat Nov 7 | Stages 4 and 5 |
-| Sun Nov 8 – Mon Nov 9 | Slides and two timed rehearsals |
+| Mon Nov 2 | Smoke test on the GPU machine, then stage 1a |
+| Tue Nov 3 | Stages 1b and 1c. Start stage 2 overnight |
+| Wed Nov 4 – Thu Nov 5 | Stages 2 and 3, queued back to back |
+| Fri Nov 6 | Stages 4 and 5 |
+| Sat Nov 7 – Mon Nov 9 | Slides and two timed rehearsals |
 | Tue Nov 10 | Send slides |
 | Fri Nov 13 | Present |
 
-If you fall behind, cut priority-2 and priority-3 ablations and the batch-size sweep first. Never cut the loss plot, the overfitting study or the test metrics.
+If you fall behind, run stage 3 with `PRIORITY=1` and skip the data-size runs in stage 2. Never cut the loss plot, the overfitting study or the test metrics.
 
 ## 6. Slide outline for 12 minutes
 

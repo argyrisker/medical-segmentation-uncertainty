@@ -1,0 +1,6 @@
+# Stage 3 ablation. Soft Dice loss only
+base: baseline.yaml
+project:
+  run_name: s3_loss_dice
+training:
+  loss: dice

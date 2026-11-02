@@ -38,6 +38,45 @@ def specificity_score(pred: np.ndarray, target: np.ndarray) -> float:
     return float(tn / (tn + fp + EPS))
 
 
+def precision_score(pred: np.ndarray, target: np.ndarray) -> float:
+    pred = pred.astype(bool)
+    target = target.astype(bool)
+    tp = np.logical_and(pred, target).sum()
+    fp = np.logical_and(pred, ~target).sum()
+    if tp + fp == 0:
+        return np.nan
+    return float(tp / (tp + fp + EPS))
+
+
+def mean_foreground_dice(pred_labels: np.ndarray, true_labels: np.ndarray, num_classes: int) -> float:
+    """Fast Dice-only metric used during training (no Hausdorff distance)."""
+    values = [dice_score(pred_labels == c, true_labels == c) for c in range(1, num_classes)]
+    return float(np.nanmean(values))
+
+
+def confusion_matrix(pred_labels: np.ndarray, true_labels: np.ndarray, num_classes: int) -> np.ndarray:
+    """Voxel confusion matrix: rows = true class, columns = predicted class."""
+    idx = true_labels.reshape(-1).astype(np.int64) * num_classes + pred_labels.reshape(-1).astype(np.int64)
+    return np.bincount(idx, minlength=num_classes * num_classes).reshape(num_classes, num_classes)
+
+
+def scores_from_confusion(cm: np.ndarray) -> dict[str, float]:
+    """Global (voxel-pooled) precision, recall and F1 per class from a confusion matrix."""
+    out: dict[str, float] = {}
+    for c in range(cm.shape[0]):
+        tp = cm[c, c]
+        fp = cm[:, c].sum() - tp
+        fn = cm[c, :].sum() - tp
+        precision = tp / (tp + fp) if tp + fp else np.nan
+        recall = tp / (tp + fn) if tp + fn else np.nan
+        f1 = 2 * tp / (2 * tp + fp + fn) if tp + fp + fn else np.nan
+        out[f"precision_class_{c}"] = float(precision)
+        out[f"recall_class_{c}"] = float(recall)
+        out[f"f1_class_{c}"] = float(f1)
+    out["voxel_accuracy"] = float(np.trace(cm) / cm.sum())
+    return out
+
+
 def _surface(mask: np.ndarray) -> np.ndarray:
     if mask.ndim != 3:
         raise ValueError("Expected a 3D mask for Hausdorff distance.")
@@ -97,6 +136,7 @@ def segmentation_metrics(
     hd95_values = []
     sens_values = []
     spec_values = []
+    prec_values = []
 
     for c in classes:
         pred_c = pred_labels == c
@@ -106,21 +146,25 @@ def segmentation_metrics(
         h = hd95(pred_c, true_c, spacing=spacing)
         s = sensitivity_score(pred_c, true_c)
         sp = specificity_score(pred_c, true_c)
+        pr = precision_score(pred_c, true_c)
 
         rows[f"dice_class_{c}"] = d
         rows[f"hd95_class_{c}"] = h
         rows[f"sensitivity_class_{c}"] = s
         rows[f"specificity_class_{c}"] = sp
+        rows[f"precision_class_{c}"] = pr
 
         dice_values.append(d)
         hd95_values.append(h)
         sens_values.append(s)
         spec_values.append(sp)
+        prec_values.append(pr)
 
     rows["dice_mean"] = float(np.nanmean(dice_values))
     rows["hd95_mean"] = float(np.nanmean(hd95_values))
     rows["sensitivity_mean"] = float(np.nanmean(sens_values))
     rows["specificity_mean"] = float(np.nanmean(spec_values))
+    rows["precision_mean"] = float(np.nanmean(prec_values))
 
     return rows
 

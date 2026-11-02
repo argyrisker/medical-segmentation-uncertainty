@@ -1,0 +1,6 @@
+# Stage 3 ablation. Cross-entropy loss only
+base: baseline.yaml
+project:
+  run_name: s3_loss_ce
+training:
+  loss: ce

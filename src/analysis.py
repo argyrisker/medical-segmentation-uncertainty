@@ -15,6 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="configs/hippocampus_unet.yaml")
     parser.add_argument("--run-name", required=True)
     parser.add_argument("--split", choices=["val", "test"], default="test")
+    parser.add_argument("--mode", default="mc_dropout", help="Uncertainty mode written by src.infer_uncertainty")
     return parser.parse_args()
 
 
@@ -33,7 +34,9 @@ def main() -> None:
     figures_dir = Path(cfg["paths"]["figures_dir"]) / args.run_name
     figures_dir.mkdir(parents=True, exist_ok=True)
 
-    uncertainty_path = metrics_dir / f"{args.split}_uncertainty.csv"
+    uncertainty_path = metrics_dir / f"{args.split}_uncertainty_{args.mode}.csv"
+    if not uncertainty_path.exists():
+        uncertainty_path = metrics_dir / f"{args.split}_uncertainty.csv"  # files from the first version
     if not uncertainty_path.exists():
         raise FileNotFoundError(f"Missing uncertainty file: {uncertainty_path}")
 
@@ -71,10 +74,10 @@ def main() -> None:
             xlabel=x_label,
             ylabel=y_label,
             title=f"{y_label} vs {x_label} | r={r:.3f}",
-            out_path=figures_dir / f"{args.split}_{y_col}_vs_{x_col}.png",
+            out_path=figures_dir / f"{args.split}_{args.mode}_{y_col}_vs_{x_col}.png",
         )
 
-    out_csv = metrics_dir / f"{args.split}_dice_uncertainty_correlations.csv"
+    out_csv = metrics_dir / f"{args.split}_{args.mode}_dice_uncertainty_correlations.csv"
     pd.DataFrame(rows).to_csv(out_csv, index=False)
 
     print(f"Saved analysis correlations: {out_csv}")

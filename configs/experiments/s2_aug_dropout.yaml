@@ -1,0 +1,9 @@
+# Stage 2. As s2_aug, plus dropout 0.1: all baseline regularisation, 10 cases.
+# (Baseline weight decay is 1e-5, too small to matter; s2_aug_dropout_wd tests a real one.)
+base: s2_aug.yaml
+project:
+  run_name: s2_aug_dropout
+model:
+  dropout: 0.1
+training:
+  weight_decay: 0.00001

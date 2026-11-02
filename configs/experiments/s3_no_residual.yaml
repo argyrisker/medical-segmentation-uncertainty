@@ -1,0 +1,6 @@
+# Stage 3 ablation. Plain conv blocks instead of residual blocks
+base: baseline.yaml
+project:
+  run_name: s3_no_residual
+model:
+  num_res_units: 0

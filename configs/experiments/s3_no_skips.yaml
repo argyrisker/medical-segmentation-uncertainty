@@ -1,0 +1,6 @@
+# Stage 3 ablation. Remove every skip connection (course hint: are skips needed?)
+base: baseline.yaml
+project:
+  run_name: s3_no_skips
+model:
+  use_skips: false

@@ -1,0 +1,6 @@
+# Stage 3 ablation. No augmentation at all
+base: baseline.yaml
+project:
+  run_name: s3_aug_none
+augmentation:
+  level: none

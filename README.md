@@ -24,6 +24,50 @@ The pipeline connects:
 10. Dice-vs-uncertainty plots
 11. Optional low-data experiments
 
+## Course project experiments (v2)
+
+The staged experiment plan for the deep-learning course lives in
+`docs/course_project/plan.md`. Each stage is one script; each run is one small
+YAML file in `configs/experiments/` that inherits from a base with `base:` and
+lists only what it changes. Finished runs are skipped when a script is rerun.
+
+```bash
+bash scripts/smoke_test.sh        # minutes; run first on the GPU machine
+bash scripts/stage1a_patch.sh     # v1 rerun + two patch strategies
+#   then edit configs/experiments/baseline.yaml (base: winner)
+bash scripts/stage1b_lr.sh        # learning-rate sweep
+#   then set training.lr in configs/experiments/baseline.yaml
+bash scripts/stage1c_baseline.sh  # final baseline, 3 training seeds
+bash scripts/stage2_overfit.sh    # overfitting study + data-size runs
+bash scripts/stage3_ablation.sh   # ablations (PRIORITY=1 for the top five)
+bash scripts/stage4_uncertainty.sh  # uncertainty + calibration on val
+bash scripts/stage5_test.sh       # the only use of the test set
+```
+
+Set `PYTHON=...` to choose the interpreter and `DEVICE=cuda:1` to pick a GPU.
+Every training run writes to `outputs/checkpoints/<run>/`:
+
+| File | Content |
+|---|---|
+| `training_history.csv` | Per epoch: lr, train loss, train and val loss/Dice on whole volumes |
+| `best_model.pt` | Weights at the best validation Dice, with the exact config used |
+| `summary.json` | Best epoch, best val Dice, parameter count, run time |
+| `val_per_case_best.csv` | Per-case validation Dice at the best epoch, for paired tests |
+| `config_used.yaml` | The fully resolved config |
+
+Tables go to `outputs/tables/`, figures to `reports/figures/`, and logs to `outputs/logs/`.
+
+What changed from v1:
+
+- **Own 3D U-Net** (`model.arch: custom`) with switches for skip connections, residual blocks, depth, dropout and normalisation.
+- **Train and inference windows match.** v1 trained on 32³ patches but predicted with 64³ windows that were mostly zero padding.
+- **Full logging**: validation loss and train Dice on whole volumes every epoch, not only training loss.
+- **Cosine learning-rate schedule** and more epochs; v1 was still improving when training stopped.
+- **Split seed separate from training seed**, so models trained with different seeds share one test set.
+- **New metrics**: precision, voxel confusion matrix, error-detection ROC/AUROC, temperature scaling.
+- **No 90-degree rotations in v2.** They swap the 48 and 64 sides of the whole-scan patch, so batches cannot be stacked. Flips on all three axes remain.
+- **No foreground crop.** The scans are pre-cropped; in v1 the crop only added a 5-voxel zero border (MONAI 1.5 pads when the margin passes the image edge).
+
 ## Environment
 
 Create the environment first:
@@ -92,50 +136,39 @@ The validation and internal test sets stay fixed. That matters; otherwise the co
 
 ## Individual commands
 
-Train:
+Every command takes `--help`. Evaluation scripts rebuild the model from the
+config stored inside the checkpoint, so they work for any experiment.
+
+Train (any config; `--set` overrides single values, `--seed` changes the training seed only):
 
 ```bash
-python -m src.train \
-  --config configs/hippocampus_unet.yaml \
-  --run-name hippocampus_unet_baseline \
-  --data-fraction 1.0 \
-  --download
+python -m src.train --config configs/experiments/baseline.yaml --seed 42 --download
+python -m src.train --config configs/experiments/baseline.yaml --set training.lr=0.001 --run-name lr_test
 ```
 
-Evaluate:
+Evaluate on train, val or test (metrics, confusion matrix, example figures):
 
 ```bash
-python -m src.evaluate \
-  --config configs/hippocampus_unet.yaml \
-  --checkpoint outputs/checkpoints/hippocampus_unet_baseline/best_model.pt \
-  --split test
+python -m src.evaluate --checkpoint outputs/checkpoints/baseline_seed42/best_model.pt --split val
 ```
 
-Uncertainty:
+Uncertainty (`deterministic`, `mc_dropout`, or `ensemble` with several checkpoints):
 
 ```bash
-python -m src.infer_uncertainty \
-  --config configs/hippocampus_unet.yaml \
-  --checkpoint outputs/checkpoints/hippocampus_unet_baseline/best_model.pt \
-  --split test
+python -m src.infer_uncertainty --checkpoint outputs/checkpoints/baseline_seed42/best_model.pt --mode mc_dropout --split val
 ```
 
-Calibration:
+Calibration, with temperature scaling fitted on the validation set:
 
 ```bash
-python -m src.calibration \
-  --config configs/hippocampus_unet.yaml \
-  --checkpoint outputs/checkpoints/hippocampus_unet_baseline/best_model.pt \
-  --split test
+python -m src.calibration --checkpoint outputs/checkpoints/baseline_seed42/best_model.pt --split test --temperature-scaling
 ```
 
-Analysis:
+Learning curves and comparison tables:
 
 ```bash
-python -m src.analysis \
-  --config configs/hippocampus_unet.yaml \
-  --run-name hippocampus_unet_baseline \
-  --split test
+python -m src.plot_curves --runs baseline_seed42 s3_no_skips --compare val_dice val_loss --name skips
+python -m src.compare_runs --runs baseline_seed42 s3_no_skips --reference baseline_seed42 --name skips
 ```
 
 ## Important methodological choices

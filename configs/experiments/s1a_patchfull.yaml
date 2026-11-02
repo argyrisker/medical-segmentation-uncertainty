@@ -1,0 +1,13 @@
+# Stage 1a. One patch covers the whole scan (largest is 43 x 59 x 47), so the
+# network always sees full context, in training and in inference.
+base: v2_common.yaml
+project:
+  run_name: s1a_patchfull
+preprocessing:
+  patch_size: [48, 64, 48]
+  num_samples: 1
+training:
+  batch_size: 4
+inference:
+  roi_size: [48, 64, 48]
+  sw_batch_size: 1

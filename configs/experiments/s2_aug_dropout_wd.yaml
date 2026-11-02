@@ -1,0 +1,6 @@
+# Stage 2. As s2_aug_dropout, plus strong weight decay (the AdamW default 1e-2).
+base: s2_aug_dropout.yaml
+project:
+  run_name: s2_aug_dropout_wd
+training:
+  weight_decay: 0.01

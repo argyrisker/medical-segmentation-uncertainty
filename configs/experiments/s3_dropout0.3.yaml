@@ -1,0 +1,6 @@
+# Stage 3 ablation. Strong dropout
+base: baseline.yaml
+project:
+  run_name: s3_dropout0.3
+model:
+  dropout: 0.3

@@ -1,0 +1,7 @@
+# Stage 3 ablation. Only anatomically plausible augmentation: left-right flip + intensity shift.
+# Drops the anterior-posterior and up-down flips that the baseline uses.
+base: baseline.yaml
+project:
+  run_name: s3_aug_anatomical
+augmentation:
+  level: anatomical
