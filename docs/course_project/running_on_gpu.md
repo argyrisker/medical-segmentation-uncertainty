@@ -66,13 +66,24 @@ version, use `CUDA_INDEX=cu121 bash setup_env.sh gpu` (or `cu118`) instead.
 The script rewrites `requirements.txt` and `environment.yml` at the end; undo
 that with `git checkout -- requirements.txt environment.yml`.
 
-**C. Neither:** make a plain virtual environment.
+**C. Neither: use uv.** Install uv if `uv --version` does not work:
 
 ```bash
-python3 -m venv ~/medseg && source ~/medseg/bin/activate
-pip install torch --index-url https://download.pytorch.org/whl/cu128
-pip install monai nibabel scipy scikit-learn pandas matplotlib tqdm pyyaml requests
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
 ```
+
+Create the environment, switch it on, and install:
+
+```bash
+uv venv ~/medseg
+source ~/medseg/bin/activate
+uv pip install torch --index-url https://download.pytorch.org/whl/cu128
+uv pip install monai nibabel scipy scikit-learn pandas matplotlib tqdm pyyaml requests
+```
+
+After logging in again later, run `source ~/medseg/bin/activate` before any
+project command. A job that is already running does not need it.
 
 Whichever you used, this must print `True`:
 
