@@ -85,6 +85,19 @@ uv pip install monai nibabel scipy scikit-learn pandas matplotlib tqdm pyyaml re
 After logging in again later, run `source ~/medseg/bin/activate` before any
 project command. A job that is already running does not need it.
 
+**"Disk quota exceeded"?** The environment needs about 5 GB, and `~` is your
+home folder, which may have a small quota. Delete the failed attempt with
+`rm -rf ~/medseg` and `uv cache clean`, then put both the environment and uv's
+download cache on a larger disk, for example:
+
+```bash
+export UV_CACHE_DIR=/nfs/home/$USER/.uv-cache
+uv venv /nfs/home/$USER/medseg
+source /nfs/home/$USER/medseg/bin/activate
+```
+
+Then run the two `uv pip install` commands again.
+
 Whichever you used, this must print `True`:
 
 ```bash
