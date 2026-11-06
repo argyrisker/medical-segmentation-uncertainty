@@ -132,6 +132,13 @@ EPOCHS=100 DEVICE=cuda:1 nohup bash scripts/run_all.sh > run_all.log 2>&1 &
 
 ## 5. Check on it
 
+Everything at once: running or finished, stages, finished runs, the current
+epoch, and roughly how many hours are left:
+
+```bash
+bash scripts/status.sh
+```
+
 Which stage it is on:
 
 ```bash
