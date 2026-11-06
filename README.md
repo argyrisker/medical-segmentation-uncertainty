@@ -31,6 +31,15 @@ The staged experiment plan for the deep-learning course lives in
 YAML file in `configs/experiments/` that inherits from a base with `base:` and
 lists only what it changes. Finished runs are skipped when a script is rerun.
 
+To run everything unattended on a GPU server, see
+`docs/course_project/running_on_gpu.md`. In short:
+
+```bash
+nohup bash scripts/run_all.sh > run_all.log 2>&1 &   # or: sbatch scripts/run_all.sh
+```
+
+Or stage by stage:
+
 ```bash
 bash scripts/smoke_test.sh        # minutes; run first on the GPU machine
 bash scripts/stage1a_patch.sh     # v1 rerun + two patch strategies

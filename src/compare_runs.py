@@ -79,14 +79,18 @@ def paired_test(a: pd.DataFrame, b: pd.DataFrame, column: str = "dice_mean") -> 
 
 
 def to_markdown(df: pd.DataFrame) -> str:
-    def fmt(x):
+    def fmt(x, column: str):
         if isinstance(x, float):
-            return "" if np.isnan(x) else f"{x:.4f}"
+            if np.isnan(x):
+                return ""
+            if column.endswith("_p") and x < 1e-4:
+                return "<0.0001"
+            return f"{x:.4f}"
         return "" if x is None else str(x)
 
     lines = ["| " + " | ".join(df.columns) + " |", "|" + "---|" * len(df.columns)]
     for _, r in df.iterrows():
-        lines.append("| " + " | ".join(fmt(x) for x in r.values) + " |")
+        lines.append("| " + " | ".join(fmt(x, c) for c, x in zip(df.columns, r.values)) + " |")
     return "\n".join(lines) + "\n"
 
 
