@@ -3,7 +3,7 @@
 Numbers come from the full run that finished on Nov 7 (200 epochs per run,
 RTX 4000 Ada, about 13 minutes per run). Validation numbers were used for every
 decision; test numbers are reported once, at the end. "±" is a standard deviation.
-Places marked **[fill in]** need the numbers from the commands at the bottom.
+Every number is filled in.
 
 ---
 
@@ -59,9 +59,12 @@ Figure: a U-Net diagram like the one on the course project slide.
 | Validation Dice | 0.684 | 0.877 ± 0.001 |
 | Test Dice | 0.700 | 0.878 ± 0.002 |
 | Test HD95 | 16.7 mm | 1.30 mm |
-| Training Dice | 0.689 | 0.918 |
+| Training Dice, saved model | 0.689 | 0.905 |
 
 Figure: `reports/figures/curves/stage1a_patch_val_dice.png`
+
+v1 was also worst on the anterior part (Dice 0.68, HD95 13.8 mm in the original
+report); v2 now does slightly better on anterior than posterior.
 
 **Say:** v1 scored the same on its own training scans as on validation, so it was not
 overfitting. It failed when predicting whole scans: it trained on 32³ cubes but
@@ -98,7 +101,7 @@ Figure: `reports/figures/curves/stage1b_lr_val_dice.png`
 **Say:** 3e-4 and 1e-3 tie; 1e-4 learns too slowly. Small patches scored 0.011
 higher, but they also took twice as many optimiser steps per epoch (91 against 46),
 so the comparison is not fully fair. The ablations use the whole-scan model as the reference.
-Optional: its test score **[fill in: s1a_patch32 test Dice]**.
+The small-patch model was also better on test: Dice 0.886 against 0.879, HD95 1.25 against 1.30 mm.
 
 ---
 
@@ -162,15 +165,25 @@ not drop: it reduces overfitting without improving results here.
 
 ## 11. Test results of the final model
 
-- Test Dice 0.879 ± 0.041 over the 39 scans (seed 42); 0.878 ± 0.002 across three seeds.
-- HD95 1.30 mm.
-- Per class, precision and recall: **[fill in]**.
-- Train / validation / test Dice of the same model: **[fill in]**.
+| Metric | Train (182) | Validation (39) | Test (39) |
+|---|---|---|---|
+| Dice, anterior | 0.905 | 0.884 | 0.885 |
+| Dice, posterior | 0.890 | 0.869 | 0.874 |
+| Dice, mean | 0.898 ± 0.027 | 0.876 ± 0.041 | 0.879 ± 0.041 |
+| Precision | 0.887 | 0.865 | 0.864 |
+| Recall (sensitivity) | 0.911 | 0.892 | 0.898 |
+| HD95 | 1.10 mm | 1.47 mm | 1.30 mm |
+
+Across three training seeds the test Dice is 0.878 ± 0.002.
+
 - Confusion matrix: `outputs/metrics/baseline_seed42/test_confusion_matrix.png`.
 - Good and bad examples: `outputs/predictions/baseline_seed42/`.
 - Context: nnU-Net reports about 0.89–0.90 on the official MSD test set. Different scans, so not directly comparable.
 
-**Say:** specificity is about 0.99 for any model because background dominates, so it is not the headline metric.
+**Say:** test is as good as validation, so model selection did not overfit the
+validation set. Recall is higher than precision: the model draws the boundary
+slightly too wide. Specificity is about 0.99 for any model because background
+dominates, so it is not the headline metric.
 
 ---
 
@@ -185,13 +198,22 @@ not drop: it reduces overfitting without improving results here.
 Figures: `reports/figures/uncertainty/uncertainty_test_roc.png`,
 `reports/figures/baseline_seed42/test_reliability_foreground.png`,
 maps in `reports/figures/baseline_seed42/mc_dropout/`.
-Temperature scaling: **[fill in: T, ECE before and after]**.
+Temperature scaling, fitted on validation and applied to test:
+
+| | Before | After (T = 3.3) |
+|---|---|---|
+| Foreground ECE | 0.164 | 0.051 |
+| Foreground NLL | 0.85 | 0.43 |
+| All-voxel ECE | 0.009 | 0.018 |
 
 **Say:** uncertainty is about five times higher on wrong voxels than on correct
 foreground voxels. An AUROC of 0.84 means an error voxel usually has higher
 uncertainty than a correct one. MC dropout is no better than the plain softmax at
 finding errors; the three-model ensemble is best on every measure. Per scan, only the
-ensemble's uncertainty tracks Dice, and weakly (r = −0.31).
+ensemble's uncertainty tracks Dice, and weakly (r = −0.31). The model is
+overconfident on the hippocampus; dividing its logits by 3.3 cuts the foreground
+calibration error by a factor of three without changing any prediction. The
+all-voxel error is tiny either way, because easy background dominates it.
 
 ---
 
@@ -200,7 +222,7 @@ ensemble's uncertainty tracks Dice, and weakly (r = −0.31).
 - Fixing the pipeline raised test Dice from 0.70 to 0.88 and cut HD95 from 16.7 to 1.3 mm.
 - Skip connections are essential; augmentation and loss choice matter little on this data.
 - More data is the strongest regulariser.
-- A small ensemble beats MC dropout for uncertainty.
+- A small ensemble beats MC dropout for uncertainty, and temperature scaling fixes most of the foreground overconfidence.
 
 Limitations: one dataset and an internal split with 39 test scans; ablations use one
 seed (the seed spread is small); the v1-to-v2 gain bundles several changes; the patch
@@ -215,16 +237,20 @@ comparison also differs in optimiser steps.
 - **How did you avoid test leakage?** All choices used validation; the test set is evaluated by one final script.
 - **Why is the seed spread ±0.001 but the per-scan spread ±0.04?** The first is how much the model changes between training runs; the second is how much scans differ in difficulty.
 - **Is MC dropout Bayesian?** It is an approximation, and here it did not beat a single softmax pass.
+- **Why is precision lower than recall?** The model draws the boundary slightly too wide, so it includes a few extra voxels.
+- **Why fit the temperature on foreground voxels only?** That is where the overconfidence is; fitting on all voxels would be dominated by easy background.
 - **Why does augmentation not help?** 182 scans already cover the anatomical variation; augmentation narrows the train-validation gap but does not raise validation Dice.
 
 ---
 
-## Commands for the missing numbers
+## Optional: picture of the worst test scan
 
-On the server, in the project folder, with the environment active:
+The example figures cover the first 8 test scans. To also have the worst one,
+save a figure for every test scan and list the three lowest:
 
 ```bash
-for s in train val test; do echo "== $s"; grep -E "^(dice_class_1|dice_class_2|dice_mean|precision_mean|sensitivity_mean|hd95_mean)," outputs/metrics/baseline_seed42/${s}_metrics_summary.csv; done
-cat outputs/metrics/baseline_seed42/test_calibration_summary.csv
-python -m src.evaluate --checkpoint outputs/checkpoints/s1a_patch32/best_model.pt --split test --num-vis 0
+python -m src.evaluate --checkpoint outputs/checkpoints/baseline_seed42/best_model.pt --split test --num-vis 39
+python -c "import pandas as pd; d = pd.read_csv('outputs/metrics/baseline_seed42/test_metrics.csv'); print(d.nsmallest(3, 'dice_mean')[['case_id', 'dice_mean', 'hd95_mean']])"
 ```
+
+The figures are in `outputs/predictions/baseline_seed42/`, named after the scan.
