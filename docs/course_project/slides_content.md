@@ -7,33 +7,42 @@ Every number is filled in, and every figure was checked against the text.
 Figure paths follow the folders uploaded to the `main` branch (`curves/`,
 `baseline_seed42/`, `predictions/`, `uncertainty/`, `report/`).
 
+## The finished deck
+
+The deck is built: https://claude.ai/artifact/KcL7yGNyk9y1vEQof7Uptx (private to you;
+download as PowerPoint or PDF from the page). It has 16 slides; the speaker notes hold
+what to say and the seconds per slide. The slide numbers below follow the deck.
+
 ## Checklist against the course guidelines
 
-| Guideline (seminar plan, slide 5 of the PDF) | Where |
+| Guideline (seminar plan, slide 5 of the PDF) | Deck slide |
 |---|---|
-| What network you used | Slide 3 |
-| Optimisation and regularisation methods | Slide 4 |
-| Training / validation / testing performance | Slides 6 and 11 |
-| Test metrics: accuracy, precision, recall, F1, confusion matrix, ROC | Slides 11 and 12 |
-| Loss plot for training and validation | Slide 6 |
-| More than 50 epochs | 200 epochs (slide 4) |
-| Make it overfit and analyse; what prevents overfitting | Slides 8 and 9 |
-| Ablation study | Slide 10 |
-| Hyperparameter tuning | Slide 7 |
+| What network you used | 3 |
+| Optimisation and regularisation methods | 4 |
+| Training / validation / testing performance | 6 and 11 |
+| Test metrics: accuracy, precision, recall, F1, confusion matrix | 11 |
+| ROC | 13 |
+| Loss plot for training and validation | 6 |
+| More than 50 epochs | 4 (200 epochs) |
+| Make it overfit and analyse; what prevents overfitting | 8 and 9 |
+| Ablation study | 10 |
+| Hyperparameter tuning | 7 |
 | Proper experiments | Fixed split, three seeds, decisions on validation only, paired tests |
-| Literature | Citations on slides 3, 11 and 12, references on slide 14 |
+| Literature | Citations on 2, 3, 11, 13 and 14; references on 16 |
 | Deep network, not classical ML | 3D U-Net, 5.7 million parameters |
 
 **Logistics:** email the slides to mahmoud.Rahat@hh.se by Tue Nov 10. That also books
 your presentation slot, first come first served, so send them as early as you can.
 Presentations are Fri Nov 13, 13:00–16:00; attend the whole session.
 
-**Timing:** 12 minutes for 13 slides. The suggested seconds per slide below add up to
-about 11 minutes 40, which leaves a little slack. Rehearse with a timer.
+**Timing:** 12 minutes for 15 presented slides (slide 16 is backup). The notes add up
+to about 11 minutes 45. Rehearse with a timer.
 
-| Slide | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Seconds | 10 | 40 | 60 | 40 | 70 | 50 | 50 | 70 | 40 | 80 | 70 | 80 | 40 |
+| Slide | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Seconds | 10 | 40 | 60 | 40 | 70 | 45 | 45 | 60 | 35 | 75 | 60 | 35 | 50 | 40 | 40 |
+
+The sections below are the original slide-by-slide draft the deck was built from.
 
 ---
 
