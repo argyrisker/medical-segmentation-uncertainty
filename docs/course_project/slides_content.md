@@ -80,7 +80,7 @@ windows, own network, schedule, more epochs), so the gain belongs to the bundle.
 
 Figure: `curves/baseline_seed42_curves.png`
 
-- Validation loss flattens from about epoch 75 while training loss keeps falling; both are lowest-or-best at epoch 96 for validation.
+- Validation loss is lowest, and validation Dice best, at epoch 96. From about epoch 75 validation loss is flat while training loss keeps falling.
 - Training keeps improving after that: final training Dice 0.916 against validation 0.873, a gap of 0.04.
 - The saved model is the epoch-96 checkpoint.
 
