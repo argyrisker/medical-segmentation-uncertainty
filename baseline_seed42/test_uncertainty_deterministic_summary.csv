@@ -1,0 +1,2 @@
+run_name,mode,split,n_passes,dice_mean,dice_std,hd95_mean,error_auroc_pooled,error_auroc_case_mean,ece_foreground,entropy_error_mean,entropy_correct_foreground_mean,dice_vs_entropy_pearson_r
+baseline_seed42,deterministic,test,1,0.8792339126874749,0.04056130635002736,1.2956202118327222,0.8375221141880238,0.8523740157748468,0.16395029182994464,0.25914637515178096,0.04673710470207226,-0.02192421695951069

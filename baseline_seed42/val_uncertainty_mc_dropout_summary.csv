@@ -1,0 +1,2 @@
+run_name,mode,split,n_passes,dice_mean,dice_std,hd95_mean,error_auroc_pooled,error_auroc_case_mean,ece_foreground,entropy_error_mean,entropy_correct_foreground_mean,dice_vs_entropy_pearson_r
+baseline_seed42,mc_dropout,val,20,0.8760634215702294,0.040895572962065044,1.4590476935431873,0.8235559124436646,0.8353653728453307,0.14496850694452912,0.3516490214910263,0.0809862474218393,-0.45111676738117745

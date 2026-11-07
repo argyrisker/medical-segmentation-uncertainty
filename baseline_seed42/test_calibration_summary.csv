@@ -1,0 +1,2 @@
+split,ece_all_voxels,ece_foreground,nll_foreground,temperature,ece_all_voxels_scaled,ece_foreground_scaled,nll_foreground_scaled
+test,0.008697759370188638,0.16395029160512492,0.8477982878684998,3.2943867651860046,0.01774568026529851,0.05087852889455685,0.4334871470928192

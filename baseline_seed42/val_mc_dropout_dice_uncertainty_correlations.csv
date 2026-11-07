@@ -1,0 +1,5 @@
+x,y,pearson_r,n_cases
+entropy_foreground_mean,dice_mean,-0.45111676738117684,39
+entropy_error_mean,dice_mean,0.8069580912656005,39
+variance_foreground_mean,dice_mean,-0.48671087746767216,39
+entropy_foreground_mean,hd95_mean,0.20660519988683979,39

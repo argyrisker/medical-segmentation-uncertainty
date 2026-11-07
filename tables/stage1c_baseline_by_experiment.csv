@@ -1,0 +1,2 @@
+experiment,best_val_dice_mean,best_val_dice_std,best_val_dice_count,final_gap_mean,final_gap_std,final_gap_count
+baseline,0.8768927904688807,0.0005553910505795585,3,0.045100098229885775,0.0022989688865130324,3
