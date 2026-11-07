@@ -7,6 +7,34 @@ Every number is filled in, and every figure was checked against the text.
 Figure paths follow the folders uploaded to the `main` branch (`curves/`,
 `baseline_seed42/`, `predictions/`, `uncertainty/`, `report/`).
 
+## Checklist against the course guidelines
+
+| Guideline (seminar plan, slide 5 of the PDF) | Where |
+|---|---|
+| What network you used | Slide 3 |
+| Optimisation and regularisation methods | Slide 4 |
+| Training / validation / testing performance | Slides 6 and 11 |
+| Test metrics: accuracy, precision, recall, F1, confusion matrix, ROC | Slides 11 and 12 |
+| Loss plot for training and validation | Slide 6 |
+| More than 50 epochs | 200 epochs (slide 4) |
+| Make it overfit and analyse; what prevents overfitting | Slides 8 and 9 |
+| Ablation study | Slide 10 |
+| Hyperparameter tuning | Slide 7 |
+| Proper experiments | Fixed split, three seeds, decisions on validation only, paired tests |
+| Literature | Citations on slides 3, 11 and 12, references on slide 14 |
+| Deep network, not classical ML | 3D U-Net, 5.7 million parameters |
+
+**Logistics:** email the slides to mahmoud.Rahat@hh.se by Tue Nov 10. That also books
+your presentation slot, first come first served, so send them as early as you can.
+Presentations are Fri Nov 13, 13:00–16:00; attend the whole session.
+
+**Timing:** 12 minutes for 13 slides. The suggested seconds per slide below add up to
+about 11 minutes 40, which leaves a little slack. Rehearse with a timer.
+
+| Slide | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Seconds | 10 | 40 | 60 | 40 | 70 | 50 | 50 | 70 | 40 | 80 | 70 | 80 | 40 |
+
 ---
 
 ## 1. Title
@@ -38,6 +66,8 @@ Figures already in the repo: `report/hippocampus_279_three_plane_overlay.png`,
 - Head: 1×1×1 convolution to 3 classes. Input: the whole scan, padded to 48×64×48.
 
 Figure: a U-Net diagram like the one on the course project slide.
+
+Cite: U-Net (Ronneberger et al., 2015) and its 3D version (Çiçek et al., 2016).
 
 ---
 
@@ -181,9 +211,21 @@ not drop: it reduces overfitting without improving results here.
 
 Across three training seeds the test Dice is 0.878 ± 0.002.
 
+Voxel-level scores over all 39 test scans pooled:
+
+| | Accuracy | Precision | Recall | F1 (= Dice) |
+|---|---|---|---|---|
+| Anterior | | 0.882 | 0.893 | 0.887 |
+| Posterior | | 0.852 | 0.901 | 0.876 |
+| All voxels | 0.988 | | | |
+
+Accuracy looks excellent, but predicting every voxel as background would already score
+0.948, because 95% of voxels are background. That is why Dice (the F1 score) is the
+headline metric.
+
 - Confusion matrix: `baseline_seed42/test_confusion_matrix.png`.
 - Examples: `predictions/baseline_seed42/`; `test_hippocampus_375_prediction.png` shows the typical one-voxel-thin boundary errors.
-- Context: nnU-Net reports about 0.89–0.90 on the official MSD test set. Different scans, so not directly comparable.
+- Context: nnU-Net (Isensee et al., 2021) reports about 0.89–0.90 on the official MSD test set (Antonelli et al., 2022). Different scans, so not directly comparable.
 
 From the confusion matrix: about 9% of hippocampus voxels are predicted as
 background, but anterior and posterior are confused with each other for only about 2%.
@@ -207,6 +249,10 @@ dominates, so it is not the headline metric.
 Figures: `uncertainty/uncertainty_test_roc.png`,
 `baseline_seed42/test_reliability_foreground.png`,
 uncertainty map `baseline_seed42/mc_dropout/test_hippocampus_375_uncertainty.png`.
+Cite: MC dropout (Gal & Ghahramani, 2016), deep ensembles (Lakshminarayanan et al., 2017),
+temperature scaling (Guo et al., 2017). Mehrtash et al. (2020) also found ensembles
+better calibrated than MC dropout for medical segmentation.
+
 Temperature scaling, fitted on validation and applied to test:
 
 | | Before | After (T = 3.3) |
@@ -242,10 +288,24 @@ comparison also differs in optimiser steps.
 
 ---
 
+## 14. References (shown only if asked, or as the last slide)
+
+- Ronneberger, Fischer, Brox. U-Net. MICCAI 2015.
+- Çiçek et al. 3D U-Net. MICCAI 2016.
+- Isensee et al. nnU-Net. Nature Methods 2021.
+- Antonelli et al. The Medical Segmentation Decathlon. Nature Communications 2022.
+- Gal & Ghahramani. Dropout as a Bayesian Approximation. ICML 2016.
+- Lakshminarayanan et al. Simple and Scalable Predictive Uncertainty Estimation using Deep Ensembles. NeurIPS 2017.
+- Guo et al. On Calibration of Modern Neural Networks. ICML 2017.
+- Mehrtash et al. Confidence Calibration and Predictive Uncertainty Estimation for Deep Medical Image Segmentation. IEEE TMI 2020.
+
+---
+
 ## Likely questions
 
 - **Why did v1 fail?** Training Dice equalled validation Dice (0.69), so it was not overfitting. Its prediction windows were mostly padding, and it was still improving at epoch 100.
 - **Why is specificity so high?** About 95% of voxels are background, so almost any model gets it right.
+- **Why not report accuracy as the main metric?** Predicting only background already gives 0.948 accuracy; Dice ignores the easy background.
 - **How did you avoid test leakage?** All choices used validation; the test set is evaluated by one final script.
 - **Why is the seed spread ±0.001 but the per-scan spread ±0.04?** The first is how much the model changes between training runs; the second is how much scans differ in difficulty.
 - **Is MC dropout Bayesian?** It is an approximation, and here it did not beat a single softmax pass.
