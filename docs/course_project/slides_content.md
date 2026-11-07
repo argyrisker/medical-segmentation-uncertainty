@@ -3,7 +3,9 @@
 Numbers come from the full run that finished on Nov 7 (200 epochs per run,
 RTX 4000 Ada, about 13 minutes per run). Validation numbers were used for every
 decision; test numbers are reported once, at the end. "±" is a standard deviation.
-Every number is filled in.
+Every number is filled in, and every figure was checked against the text.
+Figure paths follow the folders uploaded to the `main` branch (`curves/`,
+`baseline_seed42/`, `predictions/`, `uncertainty/`, `report/`).
 
 ---
 
@@ -21,8 +23,8 @@ Your name, course, date.
 - Three classes: background, anterior and posterior hippocampus. Foreground is only about 5% of each scan.
 - Fixed split: 182 training, 39 validation, 39 test scans. The official test labels are hidden.
 
-Figures already in the repo: `reports/figures/report/hippocampus_279_three_plane_overlay.png`,
-`reports/figures/report/foreground_fraction_histogram.png`.
+Figures already in the repo: `report/hippocampus_279_three_plane_overlay.png`,
+`report/foreground_fraction_histogram.png`.
 
 **Say:** a small structure with strong class imbalance; every decision was made on validation and the test set was used once.
 
@@ -61,7 +63,7 @@ Figure: a U-Net diagram like the one on the course project slide.
 | Test HD95 | 16.7 mm | 1.30 mm |
 | Training Dice, saved model | 0.689 | 0.905 |
 
-Figure: `reports/figures/curves/stage1a_patch_val_dice.png`
+Figure: `curves/stage1a_patch_val_dice.png`
 
 v1 was also worst on the anterior part (Dice 0.68, HD95 13.8 mm in the original
 report); v2 now does slightly better on anterior than posterior.
@@ -76,9 +78,9 @@ windows, own network, schedule, more epochs), so the gain belongs to the bundle.
 
 ## 6. Learning curves of the final model
 
-Figure: `reports/figures/curves/baseline_seed42_curves.png`
+Figure: `curves/baseline_seed42_curves.png`
 
-- Validation loss is lowest at epoch 96, where validation Dice is also best.
+- Validation loss flattens from about epoch 75 while training loss keeps falling; both are lowest-or-best at epoch 96 for validation.
 - Training keeps improving after that: final training Dice 0.916 against validation 0.873, a gap of 0.04.
 - The saved model is the epoch-96 checkpoint.
 
@@ -96,7 +98,7 @@ Figure: `reports/figures/curves/baseline_seed42_curves.png`
 | Learning rate 3e-4 | 0.876 |
 | Learning rate 1e-3 | 0.876 |
 
-Figure: `reports/figures/curves/stage1b_lr_val_dice.png`
+Figure: `curves/stage1b_lr_val_dice.png`
 
 **Say:** 3e-4 and 1e-3 tie; 1e-4 learns too slowly. Small patches scored 0.011
 higher, but they also took twice as many optimiser steps per epoch (91 against 46),
@@ -114,12 +116,14 @@ The small-patch model was also better on test: Dice 0.886 against 0.879, HD95 1.
 | + dropout 0.1 | 0.972 | 0.831 | 0.15 |
 | + weight decay 1e-2 | 0.972 | 0.832 | 0.15 |
 
-Figures: `reports/figures/curves/stage2_overfit_val_loss.png`, `reports/figures/curves/stage2_overfit_train_eval_dice.png`
+Figures: `curves/stage2_overfit_val_loss.png`, `curves/stage2_overfit_train_eval_dice.png`
 
-**Say:** without regularisation the network memorises the 10 scans perfectly, and
-validation loss is lowest at epoch 5 and rises after. Dropout stops perfect
-memorisation; augmentation and weight decay change almost nothing; none of them
-improves validation.
+**Say:** without regularisation the network memorises the 10 scans perfectly by
+about epoch 30, and validation loss is lowest at epoch 5 and rises after. Augmentation
+only delays memorisation to about epoch 110 and ends with the highest validation loss
+(0.44 against 0.36). Dropout is the only one that stops perfect memorisation and keeps
+validation loss lowest (0.32); weight decay adds nothing on top. None of them improves
+validation Dice.
 
 ---
 
@@ -132,10 +136,11 @@ improves validation.
 | 91 | 0.870 | 0.06 |
 | 182 | 0.876 | 0.04 |
 
-Figure: `reports/figures/curves/stage2_data_size_val_dice.png`
+Figure: `curves/stage2_data_size_val_dice.png`
 
-**Say:** every doubling of the data shrinks the gap. With all 182 scans the model
-barely overfits, which is why the full-data model could not be made to overfit.
+**Say:** every doubling of the data shrinks the gap. Most of the Dice gain comes
+from 10 to 46 scans; after that the returns shrink. With all 182 scans the model barely
+overfits, which is why the full-data model could not be made to overfit.
 
 ---
 
@@ -152,7 +157,7 @@ barely overfits, which is why the full-data model could not be made to overfit.
 Seed-to-seed spread of the baseline: ±0.001 on validation, ±0.002 on test.
 p-values: paired Wilcoxon test over the 39 scans.
 
-Figure: `reports/figures/curves/stage3_ablation_val_dice.png`
+Figure: `curves/stage3_ablation_val_dice.png`
 
 **Say:** skip connections are the only part that clearly matters. Without them the
 decoder cannot recover boundaries: test HD95 rises from 1.30 to 1.58 mm, and even
@@ -176,11 +181,15 @@ not drop: it reduces overfitting without improving results here.
 
 Across three training seeds the test Dice is 0.878 ± 0.002.
 
-- Confusion matrix: `outputs/metrics/baseline_seed42/test_confusion_matrix.png`.
-- Good and bad examples: `outputs/predictions/baseline_seed42/`.
+- Confusion matrix: `baseline_seed42/test_confusion_matrix.png`.
+- Examples: `predictions/baseline_seed42/`; `test_hippocampus_375_prediction.png` shows the typical one-voxel-thin boundary errors.
 - Context: nnU-Net reports about 0.89–0.90 on the official MSD test set. Different scans, so not directly comparable.
 
-**Say:** test is as good as validation, so model selection did not overfit the
+From the confusion matrix: about 9% of hippocampus voxels are predicted as
+background, but anterior and posterior are confused with each other for only about 2%.
+
+**Say:** almost every error is a one-voxel band at the outer boundary; the model
+rarely mixes up the two parts. Test is as good as validation, so model selection did not overfit the
 validation set. Recall is higher than precision: the model draws the boundary
 slightly too wide. Specificity is about 0.99 for any model because background
 dominates, so it is not the headline metric.
@@ -192,12 +201,12 @@ dominates, so it is not the headline metric.
 | Method | Dice | Error AUROC | Foreground ECE |
 |---|---|---|---|
 | Softmax, one pass | 0.879 | 0.838 | 0.164 |
-| MC dropout, 20 passes | 0.879 | 0.825 | 0.145 |
+| MC dropout, 20 passes | 0.879 | 0.824 | 0.145 |
 | Ensemble of 3 seeds | 0.882 | 0.858 | 0.145 |
 
-Figures: `reports/figures/uncertainty/uncertainty_test_roc.png`,
-`reports/figures/baseline_seed42/test_reliability_foreground.png`,
-maps in `reports/figures/baseline_seed42/mc_dropout/`.
+Figures: `uncertainty/uncertainty_test_roc.png`,
+`baseline_seed42/test_reliability_foreground.png`,
+uncertainty map `baseline_seed42/mc_dropout/test_hippocampus_375_uncertainty.png`.
 Temperature scaling, fitted on validation and applied to test:
 
 | | Before | After (T = 3.3) |
@@ -211,8 +220,11 @@ foreground voxels. An AUROC of 0.84 means an error voxel usually has higher
 uncertainty than a correct one. MC dropout is no better than the plain softmax at
 finding errors; the three-model ensemble is best on every measure. Per scan, only the
 ensemble's uncertainty tracks Dice, and weakly (r = −0.31). The model is
-overconfident on the hippocampus; dividing its logits by 3.3 cuts the foreground
-calibration error by a factor of three without changing any prediction. The
+overconfident on the hippocampus: where it says 90% sure, it is right only about 45%
+of the time. Dividing its logits by 3.3 brings that to about 90%, cutting the
+foreground calibration error by a factor of three without changing any prediction.
+The uncertainty map shows the same thing visually: uncertainty sits exactly on the
+outer boundary and on the line between anterior and posterior. The
 all-voxel error is tiny either way, because easy background dominates it.
 
 ---
